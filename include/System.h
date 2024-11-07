@@ -275,6 +275,12 @@ private:
     string mStrVocabularyFilePath;
 
     Settings* settings_;
+
+public:
+    void SaveRealTimeStats(const std::string&               prefix,
+                           const std::vector<double>&       vTimestamps,
+                           const std::vector<float>&        vLatency,
+                           const std::vector<Sophus::SE3f>& vPoses);
 };
 
 }// namespace ORB_SLAM

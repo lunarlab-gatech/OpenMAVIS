@@ -1627,5 +1627,61 @@ string System::CalculateCheckSum(string filename, int type)
     return checksum;
 }
 
+
+void System::SaveRealTimeStats(const std::string& prefix, const std::vector<double>& vTimestamps,
+const std::vector<float>& vLatency, const std::vector<Sophus::SE3f>& vPoses)
+{
+    std::ofstream myfile;
+    {
+        myfile.open(prefix + "_Log_Latency.txt");
+        myfile << "# Timestamp_s Latency_s" << "\n";
+        myfile << std::fixed;
+        myfile << std::setprecision(6);
+        for (size_t i = 0; i < vTimestamps.size(); ++i)
+        {
+            myfile << vTimestamps.at(i) << " " << vLatency.at(i) << "\n";
+        }
+        myfile.close();
+    }
+
+    {
+        myfile.open(prefix + "_AllFrameTrajectory.txt");
+        myfile << "# Timestamp tx ty tz qx qy qz qw" << "\n";
+        myfile << std::fixed;
+        for (size_t i = 0; i < vTimestamps.size(); ++i)
+        {
+            const auto& Twb = vPoses.at(i);
+            const auto  t   = Twb.translation();
+            const auto  q   = Twb.unit_quaternion();
+            myfile << std::setprecision(6) << vTimestamps.at(i) << " "
+                   << std::setprecision(8)
+                    << t.x() << " " << t.y() << " " << t.z() << " " 
+                    << q.x() << " " << q.y() << " " << q.z() << " " << q.w() << "\n";
+        }
+        myfile.close();
+    }
+
+    {
+        myfile.open(prefix + "_Log_Tracking.txt");
+        myfile << slam_utility::TrackingTimeLog::header() << "\n";
+        myfile << std::fixed;
+        for (const auto& m : mpTracker->tracking_logs_)
+        {
+            myfile << m << "\n";
+        }
+        myfile.close();
+    }
+
+    {
+        myfile.open(prefix + "_Log_Mapping.txt");
+        myfile << slam_utility::MappingTimeLog::header() << "\n";
+        for (const auto& m : mpLocalMapper->mapping_logs_)
+        {
+            myfile << m << "\n";
+        }
+        myfile.close();
+    }
+}
+
 } //namespace ORB_SLAM
 

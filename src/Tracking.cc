@@ -1540,6 +1540,9 @@ Sophus::SE3f Tracking::GrabImageMulti(const cv::Mat &imRectLeft, const cv::Mat &
 {
     //cout << "GrabImageStereo" << endl;
 
+    frame_log_.setZero();
+    frame_log_.timestamp = timestamp;
+
     mImGray = imRectLeft;
     cv::Mat imGrayRight = imRectRight;
     cv::Mat imGraySideLeft = imRectSideLeft;
@@ -1585,11 +1588,12 @@ Sophus::SE3f Tracking::GrabImageMulti(const cv::Mat &imRectLeft, const cv::Mat &
         }
     }
 
+    timer_.tic();
     if (mSensor == System::IMU_MULTI)
         mCurrentFrame = Frame(mImGray,imGrayRight,imGraySideLeft,imGraySideRight,timestamp,
                               mpORBextractorLeft,mpORBextractorRight,mpORBextractorSideLeft,mpORBextractorSideRight,mbleft, mbright, mbsideleft, mbsideright,
                               mpORBVocabulary,mK,mDistCoef,mbf,mThDepth,mpCamera,mpCamera2,mpCamera3,mpCamera4,mTlr,mTlsl,mTlsr,&mLastFrame,*mpImuCalib);
-
+    frame_log_.create_frame = timer_.toc();
     mCurrentFrame.mNameFile = filename;
     mCurrentFrame.mnDataset = mnNumDataset;
 
@@ -1599,6 +1603,8 @@ Sophus::SE3f Tracking::GrabImageMulti(const cv::Mat &imRectLeft, const cv::Mat &
 #endif
 
     Track();
+
+    tracking_logs_.emplace_back(frame_log_);
 
     if (mSensor == System::IMU_MULTI)
         return mCurrentFrame.GetImuPose();
@@ -2034,14 +2040,22 @@ void Tracking::Track()
                 if((!mbVelocity && !pCurrentMap->isImuInitialized()) || mCurrentFrame.mnId<mnLastRelocFrameId+2)
                 {
                     Verbose::PrintMess("TRACK: Track with respect to the reference KF ", Verbose::VERBOSITY_DEBUG);
+                    timer_.tic();
                     bOK = TrackReferenceKeyFrame();
+                    frame_log_.track_keyframe = timer_.toc();
                 }
                 else
                 {
                     Verbose::PrintMess("TRACK: Track with motion model", Verbose::VERBOSITY_DEBUG);
+                    timer_.tic();
                     bOK = TrackWithMotionModel();
-                    if(!bOK)
+                    frame_log_.track_motion = timer_.toc();
+                    if (!bOK)
+                    {
+                        timer_.tic();
                         bOK = TrackReferenceKeyFrame();
+                        frame_log_.track_keyframe = timer_.toc();
+                    }
                 }
 
 
@@ -2213,8 +2227,9 @@ void Tracking::Track()
         {
             if(bOK)
             {
+                timer_.tic();
                 bOK = TrackLocalMap();
-
+                frame_log_.track_map = timer_.toc();
             }
             if(!bOK)
                 cout << "Fail to track local map!" << endl;
@@ -2225,9 +2240,14 @@ void Tracking::Track()
             // a local map and therefore we do not perform TrackLocalMap(). Once the system relocalizes
             // the camera we will use the local map again.
             if(bOK && !mbVO)
+            {
+                timer_.tic();
                 bOK = TrackLocalMap();
+                frame_log_.track_map = timer_.toc();
+            }
         }
 
+        timer_.tic();
         if(bOK)
             mState = OK;
         else if (mState == OK)
@@ -2383,7 +2403,7 @@ void Tracking::Track()
 
         mLastFrame = Frame(mCurrentFrame);
     }
-
+    frame_log_.post_processing = timer_.toc();
 
 
 

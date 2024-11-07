@@ -30,6 +30,8 @@
 #include "Tracking.h"
 #include "KeyFrameDatabase.h"
 #include "Settings.h"
+#include "utils/timer.h"
+#include "utils/logging.h"
 
 #include <mutex>
 
@@ -199,7 +201,11 @@ protected:
     //DEBUG
     ofstream f_lm;
 
-    };
+public:
+    slam_utility::TicTocTimer timer_;
+    slam_utility::MappingTimeLog frame_log_;
+    std::vector<slam_utility::MappingTimeLog> mapping_logs_;
+};
 
 } //namespace ORB_SLAM
 

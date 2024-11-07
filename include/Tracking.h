@@ -41,6 +41,9 @@
 #include "ImuTypes.h"
 #include "Settings.h"
 
+#include "utils/timer.h"
+#include "utils/logging.h"
+
 #include "GeometricCamera.h"
 
 #include <mutex>
@@ -382,6 +385,9 @@ protected:
 
 public:
     cv::Mat mImRight, mImSideLeft, mImSideRight;
+    std::vector<slam_utility::TrackingTimeLog> tracking_logs_;
+    slam_utility::TrackingTimeLog              frame_log_;
+    slam_utility::TicTocTimer                  timer_;
 };
 
 } //namespace ORB_SLAM

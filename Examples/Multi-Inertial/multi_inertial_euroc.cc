@@ -47,19 +47,25 @@ int main(int argc, char **argv)
 {
     if(argc < 5)
     {
-        cerr << endl << "Usage: ./multi_inertial_euroc path_to_vocabulary path_to_settings path_to_sequence_folder_1 path_to_times_file_1 (path_to_image_folder_2 path_to_times_file_2 ... path_to_image_folder_N path_to_times_file_N) " << endl;
+        cerr << endl << "Usage: ./multi_inertial_euroc path_to_vocabulary path_to_settings path_to_sequence_folder path_to_times_file  output_prefix(optional) "<< endl;
         return 1;
     }
 
-    const int num_seq = (argc-3)/2;
-    cout << "num_seq = " << num_seq << endl;
-    bool bFileName= (((argc-3) % 2) == 1);
-    string file_name;
-    if (bFileName)
+    const int num_seq = 1; // (argc - 3) / 2;
+    std::string output_prefix = "test";
+    if (argc > 5)
     {
-        file_name = string(argv[argc-1]);
-        cout << "file name: " << file_name << endl;
+        output_prefix = string(argv[5]);
+        std::cout << "Output prefix: " << output_prefix << std::endl;
     }
+    // cout << "num_seq = " << num_seq << endl;
+    // bool bFileName= (((argc-3) % 2) == 1);
+    // string file_name;
+    // if (bFileName)
+    // {
+    //     file_name = string(argv[argc-1]);
+    //     cout << "file name: " << file_name << endl;
+    // }
 
     // Load all sequences:
     int seq;
@@ -92,6 +98,8 @@ int main(int argc, char **argv)
 
         string pathSeq(argv[(2*seq) + 3]);
         string pathTimeStamps(argv[(2*seq) + 4]);
+
+        std::cout << "pathSeq: " << pathSeq << "\n pathTimeStamps: " << pathTimeStamps << std::endl;
 
         string pathCam0 = pathSeq + "/mav0/cam1/data";  // Left Camera
         string pathCam1 = pathSeq + "/mav0/cam0/data";  // Right Camera
@@ -133,6 +141,10 @@ int main(int argc, char **argv)
     // Vector for tracking time statistics
     vector<float> vTimesTrack;
     vTimesTrack.resize(tot_images);
+    vector<Sophus::SE3f> vRealTimePoses;
+    vRealTimePoses.reserve(tot_images);
+    vector<double> vTimestamps;
+    vTimestamps.reserve(tot_images);
 
     cout << endl << "-------" << endl;
     cout.precision(17);
@@ -208,6 +220,8 @@ int main(int argc, char **argv)
 
             // Pass the images to the SLAM system
             Sophus::SE3f Twb = SLAM.TrackMulti(imLeft, imRight, imSideLeft, imSideRight, tframe, vImuMeas);
+            vRealTimePoses.emplace_back(Twb);
+            vTimestamps.emplace_back(tframe);
 
     #ifdef COMPILEDWITHC11
             std::chrono::steady_clock::time_point t2 = std::chrono::steady_clock::now();
@@ -249,17 +263,12 @@ int main(int argc, char **argv)
 
 
     // Save camera trajectory
-    if (bFileName)
     {
-        const string kf_file =  "kf_" + string(argv[argc-1]) + ".txt";
-        const string f_file =  "f_" + string(argv[argc-1]) + ".txt";
+        const string f_file =  output_prefix + "_CameraTrajectory.txt";
+        const string kf_file =  output_prefix + "_KeyFrameTrajectory.txt";
         SLAM.SaveTrajectoryEuRoC(f_file);
         SLAM.SaveKeyFrameTrajectoryEuRoC(kf_file);
-    }
-    else
-    {
-        SLAM.SaveTrajectoryEuRoC("CameraTrajectory.txt");
-        SLAM.SaveKeyFrameTrajectoryEuRoC("KeyFrameTrajectory.txt");
+        SLAM.SaveRealTimeStats(output_prefix, vTimestamps, vTimesTrack, vRealTimePoses);
     }
 
     return 0;

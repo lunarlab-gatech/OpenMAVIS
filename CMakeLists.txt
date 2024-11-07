@@ -30,15 +30,18 @@ endif()
 
 LIST(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake_modules)
 
-find_package(OpenCV 4.4)
+# find_package(OpenCV 4.4)
+find_package(OpenCV 4)
    if(NOT OpenCV_FOUND)
       message(FATAL_ERROR "OpenCV > 4.4 not found.")
    endif()
 
+add_definitions(-w)
 MESSAGE("OPENCV VERSION:")
 MESSAGE(${OpenCV_VERSION})
 
 find_package(Eigen3 3.1.0 REQUIRED)
+set(Pangolin_DIR /home/yanwei/slam_ws/output/3rdparty/lib/cmake/Pangolin/)
 find_package(Pangolin REQUIRED)
 find_package(realsense2)
 
