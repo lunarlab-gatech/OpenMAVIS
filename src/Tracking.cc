@@ -568,7 +568,7 @@ void Tracking::newParameterLoader(Settings *settings) {
         mpCamera2 = settings->camera2();
         mpCamera2 = mpAtlas->AddCamera(mpCamera2);
 
-        mTlr = settings->Tlr();
+        mTlr = settings->Tlr();//    *slam_utility::createDisturbedSE3(0.1, 0.1);
 
         mpFrameDrawer->both = true;
     }
@@ -591,8 +591,8 @@ void Tracking::newParameterLoader(Settings *settings) {
         mpCamera3 = mpAtlas->AddCamera(mpCamera3);
         mpCamera4 = settings->camera4();
         mpCamera4 = mpAtlas->AddCamera(mpCamera4);
-        mTlsl = settings->Tlsl();
-        mTlsr = settings->Tlsr();
+        mTlsl = settings->Tlsl(); // * slam_utility::createDisturbedSE3(0.005, 0.005);
+        mTlsr = settings->Tlsr(); // * slam_utility::createDisturbedSE3(0.005, 0.005);
     }
 
     mMinFrames = 0;
@@ -3065,9 +3065,9 @@ bool Tracking::TrackWithMotionModel()
     int th;
 
     if(mSensor==System::STEREO)
-        th=7;
+        th=7 * 1;
     else
-        th=15;
+        th=15 * 1;
 
     int nmatches = matcher.SearchByProjection(mCurrentFrame,mLastFrame,th,mSensor==System::MONOCULAR || mSensor==System::IMU_MONOCULAR);
 

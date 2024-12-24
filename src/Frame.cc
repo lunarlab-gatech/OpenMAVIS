@@ -35,6 +35,8 @@
 #include <include/CameraModels/Pinhole.h>
 #include <include/CameraModels/KannalaBrandt8.h>
 
+#include "utils/logging.h"
+
 namespace ORB_SLAM3
 {
 
@@ -1395,24 +1397,27 @@ bool Frame::isInFrustumChecks(MapPoint *pMP, float viewingCosLimit, int selected
             break;
         }
     case 1:{
-            Eigen::Matrix3f Rrl = mTrl.rotationMatrix();
-            Eigen::Vector3f trl = mTrl.translation();
+            auto disturbed_mTrl = mTrl; // * slam_utility::createDisturbedSE3(0.1, 0.2);
+            Eigen::Matrix3f Rrl = disturbed_mTrl.rotationMatrix();
+            Eigen::Vector3f trl = disturbed_mTrl.translation();
             mR = Rrl * mRcw;
             mt = Rrl * mtcw + trl;
             twc = mRwc * mTlr.translation() + mOw;
             break;
         }
     case 2:{
-            Eigen::Matrix3f Rsll = mTsll.rotationMatrix();
-            Eigen::Vector3f tsll = mTsll.translation();
+            auto disturbed_mTsll = mTsll; // * slam_utility::createDisturbedSE3(0.1, 0.2);
+            Eigen::Matrix3f Rsll = disturbed_mTsll.rotationMatrix();
+            Eigen::Vector3f tsll = disturbed_mTsll.translation();
             mR = Rsll * mRcw;
             mt = Rsll * mtcw + tsll;
             twc = mRwc * mTlsl.translation() + mOw;
             break;
         }
     case 3:{
-            Eigen::Matrix3f Rsrl = mTsrl.rotationMatrix();
-            Eigen::Vector3f tsrl = mTsrl.translation();
+            auto disturbed_mTsrl = mTsrl; // * slam_utility::createDisturbedSE3(0.1, 0.2);
+            Eigen::Matrix3f Rsrl = disturbed_mTsrl.rotationMatrix();
+            Eigen::Vector3f tsrl = disturbed_mTsrl.translation();
             mR = Rsrl * mRcw;
             mt = Rsrl * mtcw + tsrl;
             twc = mRwc * mTlsr.translation() + mOw;

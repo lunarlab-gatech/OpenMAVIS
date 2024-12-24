@@ -344,9 +344,9 @@ namespace ORB_SLAM3
     float ORBmatcher::RadiusByViewingCos(const float &viewCos)
     {
         if(viewCos>0.998)
-            return 2.5;
+            return 2.5 * 1;
         else
-            return 4.0;
+            return 4.0 * 1;
     }
 
     int ORBmatcher::SearchByBoW(KeyFrame* pKF,Frame &F, vector<MapPoint*> &vpMapPointMatches)
